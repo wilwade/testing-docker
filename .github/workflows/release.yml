@@ -1,0 +1,175 @@
+name: Test Tools Docker
+concurrency:
+  group: ${{github.workflow}}-${{github.ref}}
+  cancel-in-progress: true
+on:
+  push:
+
+jobs:
+  # Could not port this job to container because the reference node will be started in a
+  # parallel container to the job polkadot-js-tools container and the latter will not
+  # be able to connect to the former without runner supporting DinD mode first.
+  # See https://github.com/LibertyDSNP/frequency/issues/1543
+  compare-metadata-old-2004:
+    needs: build-binaries
+    name: Compare Metadata
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Set Env Vars
+        run: |
+          export NETWORK=mainnet; echo "NETWORK=$NETWORK" >> $GITHUB_ENV
+          echo "OUTPUT_FILENAME=metadata-compare-$NETWORK.txt" >> $GITHUB_ENV
+      - name: Check Out Repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set Binary Permissions
+        run: |
+          chmod 755 ./frequency-dev.amd64
+      - name: Start Test Node
+        run: |
+          ./frequency-dev.amd64 \
+            --chain=frequency-bench \
+            --rpc-external \
+            --rpc-cors=all \
+            --ws-external \
+            --rpc-methods=Unsafe \
+            --no-telemetry \
+            --no-prometheus \
+            --ws-port $((9944)) \
+            --reserved-only \
+            --tmp \
+            -- \
+            --reserved-only \
+            &
+      - name: Compare Metadata
+        run: |
+          CMD="docker run --pull always --network host frequencychain/polkadot-js-tools:v0.52.29 metadata wss://1.rpc.frequency.xyz ws://localhost:9944"
+          echo -e "Running:\n$CMD"
+          $CMD
+      - name: Stop Local Nodes
+        if: always()
+        run: |
+          echo "Attempting to kill all frequency processes..."
+          pkill -9 frequency
+
+  compare-metadata-new-localhost-2004:
+    needs: build-binaries
+    name: Compare Metadata
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Set Env Vars
+        run: |
+          export NETWORK=mainnet; echo "NETWORK=$NETWORK" >> $GITHUB_ENV
+          echo "OUTPUT_FILENAME=metadata-compare-$NETWORK.txt" >> $GITHUB_ENV
+      - name: Check Out Repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set Binary Permissions
+        run: |
+          chmod 755 ./frequency-dev.amd64
+      - name: Start Test Node
+        run: |
+          ./frequency-dev.amd64 \
+            --chain=frequency-bench \
+            --rpc-external \
+            --rpc-cors=all \
+            --ws-external \
+            --rpc-methods=Unsafe \
+            --no-telemetry \
+            --no-prometheus \
+            --ws-port $((9944)) \
+            --reserved-only \
+            --tmp \
+            -- \
+            --reserved-only \
+            &
+      - name: Compare Metadata
+        run: |
+          CMD="docker run --pull always --network host jacogr/polkadot-js-tools:0.55.3 metadata wss://1.rpc.frequency.xyz ws://localhost:9944"
+          echo -e "Running:\n$CMD"
+          $CMD
+      - name: Stop Local Nodes
+        if: always()
+        run: |
+          echo "Attempting to kill all frequency processes..."
+          pkill -9 frequency
+
+
+  compare-metadata-new-localhost-2204:
+    needs: build-binaries
+    name: Compare Metadata
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Set Env Vars
+        run: |
+          export NETWORK=mainnet; echo "NETWORK=$NETWORK" >> $GITHUB_ENV
+          echo "OUTPUT_FILENAME=metadata-compare-$NETWORK.txt" >> $GITHUB_ENV
+      - name: Check Out Repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set Binary Permissions
+        run: |
+          chmod 755 ./frequency-dev.amd64
+      - name: Start Test Node
+        run: |
+          ./frequency-dev.amd64 \
+            --chain=frequency-bench \
+            --rpc-external \
+            --rpc-cors=all \
+            --ws-external \
+            --rpc-methods=Unsafe \
+            --no-telemetry \
+            --no-prometheus \
+            --ws-port $((9944)) \
+            --reserved-only \
+            --tmp \
+            -- \
+            --reserved-only \
+            &
+      - name: Compare Metadata
+        run: |
+          CMD="docker run --pull always --network host jacogr/polkadot-js-tools:0.55.3 metadata wss://1.rpc.frequency.xyz ws://localhost:9944"
+          echo -e "Running:\n$CMD"
+          $CMD
+      - name: Stop Local Nodes
+        if: always()
+        run: |
+          echo "Attempting to kill all frequency processes..."
+          pkill -9 frequency
+
+
+  compare-metadata-new-double-docker-2204:
+    needs: build-binaries
+    name: Compare Metadata
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Set Env Vars
+        run: |
+          export NETWORK=mainnet; echo "NETWORK=$NETWORK" >> $GITHUB_ENV
+          echo "OUTPUT_FILENAME=metadata-compare-$NETWORK.txt" >> $GITHUB_ENV
+      - name: Check Out Repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set Binary Permissions
+        run: |
+          chmod 755 ./frequency-dev.amd64
+      - name: Docker network
+        run: docker network create tools
+      - name: Start Test Node
+        run: docker run --net=tools --platform=linux/amd64 --rm -p 9944:9944 -v ./frequency-dev.amd64:/app/frequency  --name frequency-ref ubuntu:22.04 /bin/sh -c "chmod +x /app/frequency && /app/frequency --rpc-external --rpc-cors=all --ws-external --rpc-methods=Unsafe --no-telemetry --no-prometheus --reserved-only --tmp -- --reserved-only"
+      - name: Compare Metadata
+        run: |
+          CMD=" docker run --rm --platform=linux/amd64 --net=tools jacogr/polkadot-js-tools:0.55.3 metadata wss://1.rpc.frequency.xyz ws://frequency-ref:9944"
+          echo -e "Running:\n$CMD"
+          $CMD
+      - name: Stop Local Nodes
+        if: always()
+        run: |
+          echo "Attempting to kill all frequency processes..."
+          docker stop frequency-ref
+          docker rm frequency-ref
+          docker network rm tools
