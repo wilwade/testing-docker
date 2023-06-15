@@ -24,11 +24,10 @@ jobs:
           fetch-depth: 0
       - name: Set Binary Permissions
         run: |
-          chmod 755 ./frequency-dev.amd64
+          chmod 755 ./frequency-dev
       - name: Start Test Node
         run: |
-          ./frequency-dev.amd64 \
-            --chain=frequency-bench \
+          ./frequency-dev \
             --rpc-external \
             --rpc-cors=all \
             --ws-external \
@@ -66,11 +65,10 @@ jobs:
           fetch-depth: 0
       - name: Set Binary Permissions
         run: |
-          chmod 755 ./frequency-dev.amd64
+          chmod 755 ./frequency-dev
       - name: Start Test Node
         run: |
-          ./frequency-dev.amd64 \
-            --chain=frequency-bench \
+          ./frequency-dev \
             --rpc-external \
             --rpc-cors=all \
             --ws-external \
@@ -109,11 +107,10 @@ jobs:
           fetch-depth: 0
       - name: Set Binary Permissions
         run: |
-          chmod 755 ./frequency-dev.amd64
+          chmod 755 ./frequency-dev
       - name: Start Test Node
         run: |
-          ./frequency-dev.amd64 \
-            --chain=frequency-bench \
+          ./frequency-dev \
             --rpc-external \
             --rpc-cors=all \
             --ws-external \
@@ -152,11 +149,11 @@ jobs:
           fetch-depth: 0
       - name: Set Binary Permissions
         run: |
-          chmod 755 ./frequency-dev.amd64
+          chmod 755 ./frequency-dev
       - name: Docker network
         run: docker network create tools
       - name: Start Test Node
-        run: docker run --net=tools --platform=linux/amd64 --rm -p 9944:9944 -v ./frequency-dev.amd64:/app/frequency  --name frequency-ref ubuntu:22.04 /bin/sh -c "chmod +x /app/frequency && /app/frequency --rpc-external --rpc-cors=all --ws-external --rpc-methods=Unsafe --no-telemetry --no-prometheus --reserved-only --tmp -- --reserved-only"
+        run: docker run --net=tools --platform=linux/amd64 --rm -p 9944:9944 -v ./frequency-dev:/app/frequency  --name frequency-ref ubuntu:22.04 /bin/sh -c "chmod +x /app/frequency && /app/frequency --rpc-external --rpc-cors=all --ws-external --rpc-methods=Unsafe --no-telemetry --no-prometheus --reserved-only --tmp -- --reserved-only"
       - name: Compare Metadata
         run: |
           CMD=" docker run --rm --platform=linux/amd64 --net=tools jacogr/polkadot-js-tools:0.55.3 metadata wss://1.rpc.frequency.xyz ws://frequency-ref:9944"
