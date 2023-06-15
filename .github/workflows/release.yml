@@ -149,7 +149,7 @@ jobs:
       - name: Docker network
         run: docker network create tools
       - name: Start Test Node
-        run: docker run --net=tools -d --platform=linux/amd64 --rm -p 9944:9944 -v `pwd`:/app  --name frequency-ref bitnami/minideb:bookworm /bin/sh -c "/app/frequency-dev --rpc-external --rpc-cors=all --ws-external --rpc-methods=Unsafe --no-telemetry --no-prometheus --reserved-only --tmp -- --reserved-only"
+        run: docker run --net=tools -d --platform=linux/amd64 --rm -v `pwd`:/app  --name frequency-ref bitnami/minideb:bookworm /bin/sh -c "/app/frequency-dev --rpc-external --rpc-cors=all --ws-external --rpc-methods=Unsafe --no-telemetry --no-prometheus --reserved-only --tmp -- --reserved-only"
       - name: Compare Metadata
         run: |
           CMD=" docker run --rm --platform=linux/amd64 --net=tools jacogr/polkadot-js-tools:0.55.3 metadata wss://1.rpc.frequency.xyz ws://frequency-ref:9944"
