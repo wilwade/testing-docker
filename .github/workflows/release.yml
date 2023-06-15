@@ -160,5 +160,4 @@ jobs:
         run: |
           echo "Attempting to kill all frequency processes..."
           docker stop frequency-ref
-          docker rm frequency-ref
           docker network rm tools
