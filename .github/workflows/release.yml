@@ -132,7 +132,37 @@ jobs:
   #         pkill -9 frequency
 
 
-  compare-metadata-new-double-docker-2204:
+  # compare-metadata-new-double-docker-2204:
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #     - name: Set Env Vars
+  #       run: |
+  #         export NETWORK=mainnet; echo "NETWORK=$NETWORK" >> $GITHUB_ENV
+  #         echo "OUTPUT_FILENAME=metadata-compare-$NETWORK.txt" >> $GITHUB_ENV
+  #     - name: Check Out Repo
+  #       uses: actions/checkout@v3
+  #       with:
+  #         fetch-depth: 0
+  #     - name: Set Binary Permissions
+  #       run: |
+  #         chmod 755 ./frequency-dev
+  #     - name: Docker network
+  #       run: docker network create tools
+  #     - name: Start Test Node
+  #       run: docker run --net=tools -d --platform=linux/amd64 --rm -p 9944:9944 -v `pwd`:/app  --name frequency-ref ubuntu:22.04 /bin/sh -c "chmod +x /app/frequency-dev && /app/frequency-dev --rpc-external --rpc-cors=all --ws-external --rpc-methods=Unsafe --no-telemetry --no-prometheus --reserved-only --tmp -- --reserved-only"
+  #     - name: Compare Metadata
+  #       run: |
+  #         CMD=" docker run --rm --platform=linux/amd64 --net=tools jacogr/polkadot-js-tools:0.55.3 metadata wss://1.rpc.frequency.xyz ws://frequency-ref:9944"
+  #         echo -e "Running:\n$CMD"
+  #         $CMD
+  #     - name: Stop Local Nodes
+  #       if: always()
+  #       run: |
+  #         echo "Attempting to kill all frequency processes..."
+  #         docker stop frequency-ref
+  #         docker network rm tools
+
+  testing-background:
     runs-on: ubuntu-22.04
     steps:
       - name: Set Env Vars
@@ -143,21 +173,11 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Set Binary Permissions
-        run: |
-          chmod 755 ./frequency-dev
-      - name: Docker network
-        run: docker network create tools
-      - name: Start Test Node
-        run: docker run --net=tools -d --platform=linux/amd64 --rm -v `pwd`:/app  --name frequency-ref bitnami/minideb:bookworm /bin/sh -c "/app/frequency-dev --rpc-external --rpc-cors=all --ws-external --rpc-methods=Unsafe --no-telemetry --no-prometheus --reserved-only --tmp -- --reserved-only"
-      - name: Compare Metadata
-        run: |
-          CMD=" docker run --rm --platform=linux/amd64 --net=tools jacogr/polkadot-js-tools:0.55.3 metadata wss://1.rpc.frequency.xyz ws://frequency-ref:9944"
-          echo -e "Running:\n$CMD"
-          $CMD
-      - name: Stop Local Nodes
-        if: always()
-        run: |
-          echo "Attempting to kill all frequency processes..."
-          docker stop frequency-ref
-          docker network rm tools
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: background
+        run: node server.mjs &
+      - name: curl
+        run: curl http://127.0.0.1:8080
